@@ -1,4 +1,4 @@
-# KGN_BORDO / 2026
+# KGN_BORDRO / 2026
 
 Türkiye'de özel sektör çalışanları için **2026 yılı bordro simülatörü**.
 
