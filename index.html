@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KGN_BORDO 2026 — Türkiye Bordro Simülatörü</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+
+<!-- ── Header ──────────────────────────────────────────────────────────── -->
+<div class="hdr">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+    <div>
+      <span class="brand-name">KGN_BORDO<s>/</s>2026</span>
+      <span class="brand-tag">TÜRKİYE BORDRO SİMÜLATÖRÜ</span>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn-o" onclick="resetAll()">↺ Temizle</button>
+      <button class="btn-p" onclick="switchTab('aylik', document.querySelectorAll('.tab-btn')[1])">Sonuçları Gör →</button>
+    </div>
+  </div>
+  <div class="params">
+    <div><span class="pk">Asg. Ücret Brüt</span><span class="pv">33.030 TL</span></div>
+    <div><span class="pk">SGK Tavan</span><span class="pv">297.270 TL/ay</span></div>
+    <div><span class="pk">SGK İşçi</span><span class="pv">%14 + %1 işsizlik</span></div>
+    <div><span class="pk">GV 1. Dilim Üst</span><span class="pv">190.000 TL</span></div>
+    <div><span class="pk">GV İstisna</span><span class="pv">4.211,33 TL/ay</span></div>
+    <div><span class="pk">DV İstisna</span><span class="pv">250,80 TL/ay</span></div>
+    <div><span class="pk">Damga Vergisi</span><span class="pv">‰7,59</span></div>
+    <div><span class="pk">Yemek Kartı GV</span><span class="pv">300 TL/gün muaf</span></div>
+    <div><span class="pk">Asg. Üc. Desteği</span><span class="pv">1.270 TL/ay</span></div>
+  </div>
+</div>
+
+<!-- ── Sekmeler ─────────────────────────────────────────────────────────── -->
+<div class="tab-bar">
+  <button class="tab-btn act"  onclick="switchTab('giris', this)">▶ GİRİŞ</button>
+  <button class="tab-btn"      onclick="switchTab('aylik', this)">📅 AYLIK DÖKÜM</button>
+  <button class="tab-btn"      onclick="switchTab('detay', this)">🔬 KESİNTİ DETAYI</button>
+  <button class="tab-btn"      onclick="switchTab('iveren', this)">🏭 İŞVEREN MALİYETİ</button>
+  <button class="tab-btn"      onclick="switchTab('kalem', this)">📋 KALEM REHBERİ</button>
+  <button class="tab-btn"      onclick="switchTab('dilim', this)">📊 VERGİ DİLİMLERİ</button>
+</div>
+
+<div class="main">
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- GİRİŞ SEKMESİ                                                        -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div id="pane-giris" class="pane act">
+<div class="gw">
+
+<!-- Sol Kolon -->
+<div>
+
+  <div class="sec">
+    <div class="sec-hd"><div class="sec-bar" style="background:var(--ac)"></div><span class="sec-ttl">Temel Bilgiler</span></div>
+    <div class="g3" style="margin-bottom:10px;">
+      <div class="field">
+        <label>Aylık Brüt Maaş (TL)
+          <span class="help">?<span class="tt"><b>Brüt maaş:</b> Sözleşmedeki ücret. Tüm kesintiler öncesi tutar. 2026 asgari ücret 33.030 TL — bunun altında girilemez.<br><br>Net maaş bu rakamdan SGK %14, işsizlik %1, gelir vergisi ve damga vergisi düşülerek bulunur.</span></span>
+        </label>
+        <input type="number" id="brut" placeholder="örn. 50000" min="33030" step="500" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Personel Tipi
+          <span class="help">?<span class="tt"><b>Normal 4/a:</b> Özel sektör SGK'lı çalışan. SGK işçi %14 + işsizlik %1 kesilir.<br><br><b>Emekli SGDP:</b> Emekli maaşı alırken çalışan. Sosyal Güvenlik Destek Primi %7,5 kesilir; işsizlik kesilmez.</span></span>
+        </label>
+        <select id="tip" onchange="calc()">
+          <option value="n">Normal çalışan (4/a) — %14+%1</option>
+          <option value="e">Emekli (SGDP) — %7,5, işsizlik yok</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Medeni Durum / AGİ
+          <span class="help">?<span class="tt"><b>AGİ (Asgari Geçim İndirimi)</b><br>Hesaplanan GV'den aylık düşülen sabit indirim:<br>• Bekâr: 1.538,50 TL/ay<br>• Evli, eş çalışıyor: 1.538,50 TL/ay<br>• + eş çalışmıyor, 1 çocuk: 1.777,49 TL<br>• 2 çocuk: 2.016,48 TL<br>• 3+ çocuk: 2.255,47 TL<br><br>18 yaş altı veya 25 yaş altı öğrenci çocuk sayılır.</span></span>
+        </label>
+        <select id="med" onchange="calc()">
+          <option value="b">Bekâr</option>
+          <option value="e0">Evli — eş çalışıyor</option>
+          <option value="e1">Evli — eş çalışmıyor, 1 çocuk</option>
+          <option value="e2">Evli — eş çalışmıyor, 2 çocuk</option>
+          <option value="e3">Evli — eş çalışmıyor, 3+ çocuk</option>
+        </select>
+      </div>
+    </div>
+    <div class="g4">
+      <div class="field">
+        <label>Çalışma Günü/Ay
+          <span class="help">?<span class="tt">Fiilen çalışılan hafta içi gün sayısı. Ortalama 22 gün/ay. Yemek yardımı bu sayı üzerinden hesaplanır.</span></span>
+        </label>
+        <input type="number" id="gun" placeholder="22" min="1" max="31" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Hafta Tatili Günü
+          <span class="help">?<span class="tt">İş Kanunu 46. md. — haftalık dinlenme günü. Çalışılmasa bile brüt maaşa dahil edilir. Genellikle 4–5 gün/ay.</span></span>
+        </label>
+        <input type="number" id="tatil" placeholder="4" min="0" max="10" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Resmi Tatil Günü
+          <span class="help">?<span class="tt">İş Kanunu 47. md. — resmi tatil günü çalışıldıysa o gün için ayrıca ücret ödenir.</span></span>
+        </label>
+        <input type="number" id="rtatil" placeholder="0" min="0" max="15" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Fazla Mesai (saat)
+          <span class="help">?<span class="tt">Günlük 7,5 saati aşan çalışma. Brüt saatlik ücret × saat × (1 + zam oranı). Hem SGK hem GV matrahını artırır.</span></span>
+        </label>
+        <input type="number" id="fm" placeholder="0" min="0" oninput="calc()">
+      </div>
+    </div>
+    <div class="g2" style="margin-top:8px;">
+      <div class="field">
+        <label>Fazla Mesai Zam Oranı
+          <span class="help">?<span class="tt"><b>%50:</b> Hafta içi günlük 7,5 saati aşan normal mesai.<br><b>%100:</b> Gece 22:00–06:00 veya hafta sonu yapılan fazla mesai.</span></span>
+        </label>
+        <select id="fmoran" onchange="calc()">
+          <option value="0.5">%50 — hafta içi normal</option>
+          <option value="1">%100 — gece / hafta sonu</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Raporlu Gün
+          <span class="help">?<span class="tt">Hastalık raporu ile işe gelemeyen gün sayısı (bilgi amaçlı). Gerçek iş göremezlik kesinti tutarını aşağıdaki "İş Göremezlik Kesintisi" alanına girin.</span></span>
+        </label>
+        <input type="number" id="rapor" placeholder="0" min="0" max="30" oninput="calc()">
+        <span class="hint">Bilgi amaçlı; kesinti tutarını ayrıca girin</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd"><div class="sec-bar" style="background:var(--am)"></div><span class="sec-ttl">Sabit Yan Haklar</span><span class="sec-bdg sbg">Her ay uygulanır</span></div>
+    <div class="g3" style="margin-bottom:10px;">
+      <div class="field">
+        <label>Aylık İkramiye Brüt (TL)
+          <span class="help">?<span class="tt"><b>İkramiye / 13. maaş</b><br>Yıllık 1–3 maaş ikramiye, aylık taksitle ödeniyor olabilir.<br>Hem SGK hem GV matrahına eklenir. Yıllık 3 maaş = Brüt maaş ÷ 3</span></span>
+        </label>
+        <input type="number" id="ikr" placeholder="örn. 23400" min="0" step="100" oninput="calc()">
+        <span class="hint">Yıllık 3 maaş = brüt ÷ 3</span>
+      </div>
+      <div class="field">
+        <label>Özel Sağlık Sig. Brüt
+          <span class="help">?<span class="tt"><b>İşveren özel sağlık sigortası</b> (GVK 63/3)<br>İşveren tarafından ödenen tutar hem SGK hem GV matrahından tamamen düşülür.<br><br>Yalnızca işveren tarafından sağlanan primler için geçerlidir.</span></span>
+        </label>
+        <input type="number" id="ssk" placeholder="örn. 4166" min="0" oninput="calc()">
+        <span class="hint">SGK + GV matrahından tamamen düşülür</span>
+      </div>
+      <div class="field">
+        <label>Ek Ödeme Brüt (TL)
+          <span class="help">?<span class="tt">Maaşa ek olarak her ay ödenen sabit küçük tutar (sosyal yardım, kıyafet desteği vb.). Muafiyeti yoktur, tüm matrahlar dahildir.</span></span>
+        </label>
+        <input type="number" id="ekod" placeholder="örn. 400" min="0" oninput="calc()">
+      </div>
+    </div>
+    <div class="g4">
+      <div class="field">
+        <label>Yemek Yardımı Tipi
+          <span class="help">?<span class="tt"><b>Yemek Kartı (önerilir):</b> SGK prim muafiyeti sınırsız. GV: günlük 300 TL muaf. Aşan kısım GV matrahına girer.<br><br><b>Nakit:</b> SGK günlük 158 TL muaf. GV günlük 300 TL muaf.</span></span>
+        </label>
+        <select id="yemekt" onchange="calc()">
+          <option value="yok">— Seçin —</option>
+          <option value="kart">Yemek Kartı (SGK+GV tam muaf)</option>
+          <option value="nakit">Nakit (kısmi istisna)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Günlük Yemek (TL)
+          <span class="help">?<span class="tt">İş günü başına verilen yemek bedeli. Aylık tutar: günlük × çalışma günü sayısı.<br><br>2026 GV istisnası: günlük 300 TL (KDV hariç). KDV dahil 330 TL'ye kadar tam muafiyet sağlanır.</span></span>
+        </label>
+        <input type="number" id="yemekg" placeholder="örn. 330" min="0" oninput="calc()">
+        <span class="hint">Aylık = günlük × çalışma günü</span>
+      </div>
+      <div class="field">
+        <label>Yol Yardımı (TL/ay)
+          <span class="help">?<span class="tt">Ulaşım desteğinin aylık tutarı. Nakit verilirse GV istisnası yoktur; kart/bilet verilirse günlük 158 TL GV muafiyeti uygulanır.</span></span>
+        </label>
+        <input type="number" id="yol" placeholder="0" min="0" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Yol Ödeme Tipi
+          <span class="help">?<span class="tt"><b>Ayni (kart/bilet):</b> SGK tam muaf. GV: günlük 158 TL muaf, aşan kısım matrahta.<br><br><b>Nakit:</b> GV istisnası yoktur. Tüm tutar hem SGK hem GV matrahına girer.</span></span>
+        </label>
+        <select id="yolt" onchange="calc()">
+          <option value="ayni">Ayni — kart/bilet (158 TL/gün GV muaf)</option>
+          <option value="nakit">Nakit — istisna yok</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd"><div class="sec-bar" style="background:var(--rd)"></div><span class="sec-ttl">Özel Kesintiler</span><span class="sec-bdg sbr">Her ay net ücretten düşülür</span></div>
+    <div class="info ir" style="margin-bottom:10px;margin-top:0;font-size:10px;">
+      Bu alandaki kesintiler <b>kişisel / idari kesintilerdir</b> — yasal değildir. Vergi veya SGK matrahlarını <b>etkilemez</b>. Yalnızca banka hesabına yatacak net tutarı azaltır.
+    </div>
+    <div class="g3">
+      <div class="field">
+        <label>Vadeli Borç Taksiti (TL)
+          <span class="help">?<span class="tt">İşveren tarafından daha önce verilen avans veya kredi için aylık geri ödeme taksiti. Net ücretten doğrudan düşülür.</span></span>
+        </label>
+        <input type="number" id="borc" placeholder="0" min="0" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Geçici Avans Kesintisi
+          <span class="help">?<span class="tt">O ay alınan avansın bordroda geri kesilmesi. Net ücretten düşülür, vergi matrahlarını etkilemez.</span></span>
+        </label>
+        <input type="number" id="avans" placeholder="0" min="0" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>İş Göremezlik Kesintisi
+          <span class="help">?<span class="tt"><b>SGK iş göremezlik ödeneği mahsubu</b><br>Rapor dönemlerinde SGK çalışana ödeme yapar; bu tutar bordroda geri kesilir. Net ücretten düşülür; matraha etkisi yoktur.<br>Yaklaşık: brüt günlük × rapor günü × %66.</span></span>
+        </label>
+        <input type="number" id="igg" placeholder="0" min="0" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+</div><!-- /sol kolon -->
+
+<!-- Sağ Kolon -->
+<div>
+
+  <div class="sec">
+    <div class="sec-hd"><div class="sec-bar" style="background:var(--am)"></div><span class="sec-ttl">Satış / Performans Primi — Ay Ay</span></div>
+    <div class="info ia" style="margin-bottom:10px;margin-top:0;font-size:10px;">
+      <b>Kritik:</b> Her prim GV kümülatif matrahını artırır ve dilim geçişini hızlandırabilir.
+      <span class="wn">Ocak–Mart aylarında ödenen büyük primler %15 diliminde vergilenir; aynı tutar Kasım'da %35'te vergilenebilir.</span>
+      Prim + maaş 297.270 TL SGK tavanını aşarsa fazla tutar sonraki aya devreder.
+    </div>
+    <div class="g6" id="prim-grid" style="margin-bottom:4px;"></div>
+    <span class="hint" style="display:block;margin-top:4px;">Prim olmayan ayları boş bırakın veya 0 girin</span>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd"><div class="sec-bar" style="background:var(--tl)"></div><span class="sec-ttl">Tekil Ay Kalemleri</span></div>
+    <div class="g4" style="margin-bottom:8px;">
+      <div class="field">
+        <label>Hediye Çeki — Hangi Ay?
+          <span class="help">?<span class="tt"><b>Hediye çeki / kart</b><br>Yıl içinde belirli aylarda verilen hediye çeki veya kart. GV ve DV matrahına girer. Net tutarı özel kesintide geri alınır ama GV matrahını artırır.</span></span>
+        </label>
+        <select id="hcay" onchange="calc()">
+          <option value="-1">— Yok —</option>
+          <option value="0">Ocak</option><option value="1">Şubat</option><option value="2">Mart</option>
+          <option value="3">Nisan</option><option value="4">Mayıs</option><option value="5">Haziran</option>
+          <option value="6">Temmuz</option><option value="7">Ağustos</option><option value="8">Eylül</option>
+          <option value="9">Ekim</option><option value="10">Kasım</option><option value="11">Aralık</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Hediye Çeki Brüt (TL)
+          <span class="help">?<span class="tt">Brütleştirilmiş bordro tutarını girin. Net tutar genellikle brütün %70–80'i kadardır.</span></span>
+        </label>
+        <input type="number" id="hct" placeholder="0" min="0" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Aile / Çocuk Zammı (TL/ay)
+          <span class="help">?<span class="tt"><b>SGK:</b> Brüt asgari ücretin %10'u olan 3.303 TL'ye kadar SGK matrahından muaf.<br><b>GV:</b> Özel sektörde GV istisnası yoktur; tüm tutar GV matrahında.</span></span>
+        </label>
+        <input type="number" id="aile" placeholder="0" min="0" oninput="calc()">
+        <span class="hint">SGK: 3.303 TL'ye kadar muaf</span>
+      </div>
+      <div class="field">
+        <label>Diğer Kesinti (TL/ay)
+          <span class="help">?<span class="tt">Sendika aidatı, icra kesintisi vb. Net ücretten düşülür; vergi/SGK matrahlarını etkilemez.</span></span>
+        </label>
+        <input type="number" id="diger" placeholder="0" min="0" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd"><div class="sec-bar" style="background:var(--cy)"></div><span class="sec-ttl">İşveren SGK Teşvikleri</span></div>
+    <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:8px;">
+      <label class="chk-row">
+        <input type="checkbox" id="t5" onchange="onT5Change()">
+        <div class="chk-lbl">
+          <span class="chk-main">5 puan indirim — imalat sektörü</span>
+          <span class="chk-sub">SGK işveren payı %21,75 → %16,75 | 5510/81-ı | SGK primlerini düzenli ödeyen, kuruma borcu ve kayıt dışı işçisi bulunmayan imalat sektörü işverenleri için geçerlidir.</span>
+        </div>
+      </label>
+      <label class="chk-row">
+        <input type="checkbox" id="t2" onchange="onT2Change()">
+        <div class="chk-lbl">
+          <span class="chk-main">2 puan indirim — imalat dışı sektörler</span>
+          <span class="chk-sub">SGK işveren payı %21,75 → %19,75 | Hizmet, ticaret, inşaat vb. 5 puan ile aynı anda uygulanamaz.</span>
+        </div>
+      </label>
+      <label class="chk-row">
+        <input type="checkbox" id="siv" checked onchange="calc()">
+        <div class="chk-lbl">
+          <span class="chk-main">İşveren maliyeti sütununu göster</span>
+          <span class="chk-sub">İşveren sekmesinde yıllık toplam maliyet hesaplanır. Asgari ücret desteği (1.270 TL/ay) otomatik düşülür.</span>
+        </div>
+      </label>
+    </div>
+    <div class="info" style="font-size:9px;margin-top:0;">
+      <b>Teşviksiz:</b> %21,75 + %2 işsizlik = %23,75 toplam |
+      <b>5 puan:</b> %16,75 + %2 = %18,75 |
+      <b>2 puan:</b> %19,75 + %2 = %21,75 |
+      Teşvik seçilmezse teşviksiz oran uygulanır.
+    </div>
+  </div>
+
+</div><!-- /sağ kolon -->
+</div><!-- /gw -->
+
+<div id="giris-empty" class="empty" style="margin-top:10px;">
+  <div class="empty-ico">📝</div>
+  <div class="empty-ttl">Brüt maaşı girerek hesaplamayı başlatın</div>
+  <div class="empty-sub">Tüm alanlar isteğe bağlıdır. Girilen değerler otomatik hesaplanır.</div>
+</div>
+<div class="cg-wrap" id="c0" style="margin-top:10px;display:none;"></div>
+<div class="info ig" id="n0" style="display:none;"></div>
+
+</div><!-- /pane-giris -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- AYLIK DÖKÜM SEKMESİ                                                  -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div id="pane-aylik" class="pane">
+<div class="lgnd">
+  <span style="font-size:9px;font-weight:600;color:var(--tx2);margin-right:2px;">Satır:</span>
+  <div class="li"><div class="ld" style="background:#fef3c7;border:1px solid #f59e0b;"></div>Prim ayı</div>
+  <div class="li"><div class="ld" style="background:#ede9fe;border:1px solid #8b5cf6;"></div>Dilim geçişi</div>
+  <div class="li"><div class="ld" style="background:#fee2e2;border:1px solid #f87171;"></div>Prim + dilim (aynı ay)</div>
+  <div class="li"><div class="ld" style="background:#e0f2fe;border:1px solid #38bdf8;"></div>SGK tavan aşımı</div>
+</div>
+<div class="cg-wrap" id="c1"></div>
+<div class="tw">
+<table>
+<thead>
+<tr>
+  <th class="tl sr" rowspan="2">AY</th>
+  <th colspan="6" style="text-align:center;" class="ge sr">EK KAZANÇLAR (Brüt)</th>
+  <th class="ge" rowspan="2">TOPLAM BRÜT</th>
+  <th colspan="3" style="text-align:center;" class="gs sr">SGK</th>
+  <th colspan="4" style="text-align:center;" class="gg sr">GELİR VERGİSİ</th>
+  <th colspan="2" style="text-align:center;" class="gd sr">DAMGA V.</th>
+  <th colspan="2" style="text-align:center;" class="gn">NET</th>
+</tr>
+<tr>
+  <th class="ge">Prim</th><th class="ge">İkramiye</th><th class="ge">Yemek</th>
+  <th class="ge">Sağlık</th><th class="ge">Yol</th><th class="ge sr">Diğer</th>
+  <th class="gs">Matrah</th><th class="gs">İşçi Kes.</th><th class="gs sr">Tavan?</th>
+  <th class="gg">Aylık Mat.</th><th class="gg">Küm. Mat.</th>
+  <th class="gg">Dilim</th><th class="gg sr">Net GV</th>
+  <th class="gd">Brüt DV</th><th class="gd sr">Net DV</th>
+  <th class="gn">Özel Kes.</th><th class="gn" style="color:var(--gn);font-weight:700;">NET ELE GEÇEN</th>
+</tr>
+</thead>
+<tbody id="tb1">
+  <tr><td colspan="18" class="tl" style="text-align:center;padding:30px;color:var(--tx3);">GİRİŞ sekmesinden brüt maaş ve diğer bilgileri doldurun.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="info" id="n1" style="margin-top:8px;display:none;"></div>
+</div><!-- /pane-aylik -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- KESİNTİ DETAYI SEKMESİ                                               -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div id="pane-detay" class="pane">
+<div class="cg-wrap" id="c2"></div>
+<div class="tw">
+<table>
+<thead>
+<tr>
+  <th class="tl">AY</th><th>Toplam Brüt</th>
+  <th class="gs">SGK Mat.</th><th class="gs">SGK İşçi</th><th class="gs sr">İşsizlik</th>
+  <th class="gg">GV Mat.</th><th class="gg">Küm. Mat.</th><th class="gg">Dilim</th>
+  <th class="gg">Hesap. GV</th><th class="gg">GV İstisna</th><th class="gg sr">Net GV</th>
+  <th class="gd">DV Brüt</th><th class="gd">DV İstisna</th><th class="gd sr">Net DV</th>
+  <th>Yemek Geri</th><th>Sağlık Geri</th><th>HC Geri</th>
+  <th>Borç/Avans</th><th>Toplam Kes.</th>
+  <th class="gn" style="color:var(--gn);font-weight:700;">NET</th>
+</tr>
+</thead>
+<tbody id="tb2">
+  <tr><td colspan="20" class="tl" style="text-align:center;padding:30px;color:var(--tx3);">GİRİŞ sekmesinden bilgileri doldurun.</td></tr>
+</tbody>
+</table>
+</div>
+</div><!-- /pane-detay -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- İŞVEREN MALİYETİ SEKMESİ                                             -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div id="pane-iveren" class="pane">
+<div class="cg-wrap" id="c3"></div>
+<div class="tw">
+<table>
+<thead>
+<tr>
+  <th class="tl">AY</th><th>SGK Mat.</th>
+  <th class="gi">SGK İşveren</th><th class="gi">İşsizlik İşv. (%2)</th>
+  <th class="gi">Toplam İşv. SGK</th>
+  <th style="color:var(--gn);">Asg. Üc. Desteği</th>
+  <th class="gi">Net İşv. SGK</th><th class="gi">Toplam Brüt</th>
+  <th class="gi" style="color:var(--tl);font-weight:700;">TOPLAM MALİYET</th>
+  <th>Net/Maliyet</th>
+</tr>
+</thead>
+<tbody id="tb3">
+  <tr><td colspan="10" class="tl" style="text-align:center;padding:30px;color:var(--tx3);">GİRİŞ sekmesinden bilgileri doldurun.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="info" id="n3" style="margin-top:8px;display:none;"></div>
+</div><!-- /pane-iveren -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- KALEM REHBERİ SEKMESİ                                                -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div id="pane-kalem" class="pane">
+<div class="sec">
+  <div class="sec-hd"><div class="sec-bar" style="background:var(--ac)"></div><span class="sec-ttl">Bordro Kalem Anatomisi — 2026 Matrah Etkileri</span></div>
+  <div class="tw">
+  <table class="ktbl">
+  <thead>
+    <tr>
+      <th class="tl" style="min-width:140px;">Kalem</th>
+      <th class="tl" style="min-width:90px;">Grup</th>
+      <th style="text-align:center;min-width:90px;">SGK Mat.</th>
+      <th style="text-align:center;min-width:90px;">GV Mat.</th>
+      <th style="text-align:center;min-width:80px;">DV Mat.</th>
+      <th class="tl" style="min-width:240px;">2026 İstisna / Kural</th>
+      <th class="tl" style="min-width:140px;">Özel Kesintiye Gider?</th>
+    </tr>
+  </thead>
+  <tbody id="ktbl-body"></tbody>
+  </table>
+  </div>
+</div>
+
+<div class="g2" style="gap:10px;">
+  <div class="sec">
+    <div class="sec-hd"><div class="sec-bar" style="background:var(--gn)"></div><span class="sec-ttl">Asgari Ücret Vergi İstisnası (GVK Geç. 85)</span></div>
+    <div class="info ig" style="margin-top:0;font-size:10px;">
+      <b>Kural:</b> 2022'den beri tüm çalışanların maaşının asgari ücrete denk gelen kısmı GV ve DV'den muaf. 200.000 TL maaşta da geçerlidir.<br><br>
+      <b>GV İstisnası:</b> Net asgari ücret (28.075,50 TL) × %15 = <b class="ok">4.211,33 TL/ay</b> sabit indirim.<br><br>
+      <b>DV İstisnası:</b> Brüt asgari ücret (33.030 TL) × ‰7,59 = <b class="ok">250,80 TL/ay</b> sabit indirim.
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-hd"><div class="sec-bar" style="background:var(--am)"></div><span class="sec-ttl">SGK Tavan Aşımı ve Devir Matrah</span></div>
+    <div class="info ia" style="margin-top:0;font-size:10px;">
+      <b>Tavan:</b> 2026'da aylık SGK prime esas kazanç üst sınırı <b>297.270 TL</b>. Bu sınırı aşan kazançtan SGK primi kesilmez.<br><br>
+      <b>Devir:</b> Büyük prim nedeniyle toplam brüt tavanı aşarsa, fazla tutar sonraki aya taşır. Bu, prim ayını takip eden ayda da yüksek SGK kesintisine yol açar.<br><br>
+      <span class="wn">Sonuç:</span> Büyük prim ayından sonraki ay prim olmasa bile SGK kesintisi yüksek çıkabilir.
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-hd"><div class="sec-bar" style="background:var(--cy)"></div><span class="sec-ttl">Yemek Yardımı — 2026 İstisna Karşılaştırması</span></div>
+  <div class="tw">
+  <table class="ktbl">
+  <thead>
+    <tr>
+      <th class="tl">Yöntem</th>
+      <th style="text-align:center;">GV/DV Muafiyeti</th>
+      <th style="text-align:center;">SGK Muafiyeti</th>
+      <th class="tl">Limit</th>
+      <th class="tl">Aşan Kısım</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="tl"><b>Yemek Kartı / Çeki</b></td>
+      <td class="iy">✓ Tam</td>
+      <td class="iy">✓ Sınırsız</td>
+      <td style="font-size:10px;">300 TL/gün (KDV hariç) — KDV dahil 330 TL</td>
+      <td style="font-size:10px;">Aşan: GV+DV tabidir; SGK muaf kalmaya devam eder</td>
+    </tr>
+    <tr>
+      <td class="tl"><b>Nakit Yemek Parası</b></td>
+      <td class="ip2">⚠ Kısmi</td>
+      <td class="ip2">⚠ Kısmi</td>
+      <td style="font-size:10px;">GV: 300 TL/gün | SGK: 158 TL/gün</td>
+      <td style="font-size:10px;">Aşan: her iki matrahta da vergiye ve prime tabidir</td>
+    </tr>
+    <tr>
+      <td class="tl"><b>İşyerinde Yemek (Aynî)</b></td>
+      <td class="iy">✓ Tam</td>
+      <td class="iy">✓ Tam</td>
+      <td style="font-size:10px;">Tutar sınırı yok</td>
+      <td style="font-size:10px;">—</td>
+    </tr>
+  </tbody>
+  </table>
+  </div>
+</div>
+</div><!-- /pane-kalem -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- VERGİ DİLİMLERİ SEKMESİ                                              -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div id="pane-dilim" class="pane">
+<div class="sec">
+  <div class="sec-hd"><div class="sec-bar" style="background:var(--pu)"></div><span class="sec-ttl">2026 Gelir Vergisi Tarifeleri — Ücret Gelirleri</span></div>
+  <div class="info ip" style="margin-bottom:10px;margin-top:0;font-size:10px;">
+    <b>Nasıl çalışır?</b> Yalnızca her dilimi aşan kısım o oran üzerinden vergilenir. Kümülatif matrah 200.000 TL ise: 190.000 TL için %15 (28.500 TL), aşan 10.000 TL için %20 (2.000 TL) = toplam 30.500 TL. Üst dilime geçmek tüm maaşın o oranda vergileneceği anlamına gelmez.
+  </div>
+  <div class="tw">
+  <table>
+  <thead>
+    <tr>
+      <th class="tl">Dilim</th><th>Küm. Alt</th><th>Küm. Üst</th><th>Oran</th>
+      <th>Max Vergi</th><th>Önceki Birikimi</th><th class="tl">2024→2025→2026</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="tl"><span class="bdg b1">1. DİLİM</span></td><td>0</td><td class="nG">190.000 TL</td><td class="nG" style="font-weight:700;">%15</td><td class="nG">28.500 TL</td><td>—</td><td class="tl" style="font-size:10px;color:var(--tx2);">110.000 → 158.000 → 190.000 (+%73)</td></tr>
+    <tr><td class="tl"><span class="bdg b2">2. DİLİM</span></td><td>190.001</td><td class="nA">400.000 TL</td><td class="nA" style="font-weight:700;">%20</td><td class="nA">42.000 TL</td><td>28.500 TL</td><td class="tl" style="font-size:10px;color:var(--tx2);">230.000 → 330.000 → 400.000</td></tr>
+    <tr><td class="tl"><span class="bdg b3">3. DİLİM</span></td><td>400.001</td><td class="nA">1.500.000 TL</td><td class="nA" style="font-weight:700;">%27</td><td class="nA">297.000 TL</td><td>70.500 TL</td><td class="tl" style="font-size:10px;color:var(--tx2);">870.000 → 1.200.000 → 1.500.000</td></tr>
+    <tr><td class="tl"><span class="bdg b4">4. DİLİM</span></td><td>1.500.001</td><td class="nR">5.300.000 TL</td><td class="nR" style="font-weight:700;">%35</td><td class="nR">1.330.000 TL</td><td>367.500 TL</td><td class="tl" style="font-size:10px;color:var(--tx2);">Yüksek primli pozisyonlarda yıl sonu</td></tr>
+    <tr><td class="tl"><span class="bdg b5">5. DİLİM</span></td><td>5.300.001+</td><td class="nP">Sınırsız</td><td class="nP" style="font-weight:700;">%40</td><td class="nP">—</td><td>1.697.500 TL</td><td class="tl" style="font-size:10px;color:var(--tx2);">3.000.000 → 4.300.000 → 5.300.000</td></tr>
+  </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-hd"><div class="sec-bar" style="background:var(--am)"></div><span class="sec-ttl">Simüle Edilen Yılın Dilim Dağılımı</span></div>
+  <div id="dilim-vis">
+    <div class="empty"><div class="empty-sub">Brüt maaş girildikten sonra bu grafik otomatik oluşur.</div></div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-hd"><div class="sec-bar" style="background:var(--ac)"></div><span class="sec-ttl">Yıllar Arası Parametre Karşılaştırması</span></div>
+  <div class="tw">
+  <table>
+  <thead>
+    <tr>
+      <th class="tl">Parametre</th><th>2023</th><th>2024 H1</th><th>2024 H2</th><th>2025</th><th class="nB">2026</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="tl">Asgari Ücret Brüt</td><td class="nX">13.414</td><td class="nX">17.002</td><td class="nX">20.002</td><td class="nX">26.006</td><td class="nB">33.030 TL</td></tr>
+    <tr><td class="tl">SGK Tavan</td><td class="nX">—</td><td class="nX">—</td><td class="nX">—</td><td class="nX">264.263</td><td class="nB">297.270 TL</td></tr>
+    <tr><td class="tl">GV 1. Dilim Üst</td><td class="nX">70.000</td><td class="nX">110.000</td><td class="nX">110.000</td><td class="nX">158.000</td><td class="nB">190.000 TL</td></tr>
+    <tr><td class="tl">GV 2. Dilim Üst</td><td class="nX">150.000</td><td class="nX">230.000</td><td class="nX">230.000</td><td class="nX">330.000</td><td class="nB">400.000 TL</td></tr>
+    <tr><td class="tl">GV İstisna/ay</td><td class="nX">~1.700</td><td class="nX">2.550</td><td class="nX">2.550</td><td class="nX">3.316</td><td class="nB">4.211,33 TL</td></tr>
+    <tr><td class="tl">DV İstisna/ay</td><td class="nX">—</td><td class="nX">151,82</td><td class="nX">151,82</td><td class="nX">197,38</td><td class="nB">250,80 TL</td></tr>
+  </tbody>
+  </table>
+  </div>
+</div>
+</div><!-- /pane-dilim -->
+
+</div><!-- /main -->
+
+<div class="ftr">KGN_BORDO / 2026 — Türkiye Bordro Simülatörü — Yalnızca bilgilendirme amaçlıdır, resmi bordro veya hukuki danışmanlık niteliği taşımaz</div>
+</div><!-- /app -->
+
+<!-- Yükleme sırası önemli: constants → calc → ui -->
+<script src="js/constants.js"></script>
+<script src="js/calc.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
